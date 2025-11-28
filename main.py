@@ -1,7 +1,8 @@
-import pygame
-import sys
 import copy
-from typing import List, Tuple, Optional
+import sys
+from typing import List, Optional, Tuple
+
+import pygame
 
 # ==============================
 # Konfigurasi
@@ -22,12 +23,12 @@ TEXT_BLACK = (30, 30, 30)
 
 # Nilai material untuk evaluasi AI
 PIECE_VALUES = {
-    'p': 100,
-    'n': 320,
-    'b': 330,
-    'r': 500,
-    'q': 900,
-    'k': 20000,
+    "p": 100,
+    "n": 320,
+    "b": 330,
+    "r": 500,
+    "q": 900,
+    "k": 20000,
 }
 
 # ==============================
@@ -56,9 +57,9 @@ def in_bounds(r: int, c: int) -> bool:
 
 
 def get_color(piece: str) -> Optional[str]:
-    if piece == '.' or piece == '':
+    if piece == "." or piece == "":
         return None
-    return 'white' if piece.isupper() else 'black'
+    return "white" if piece.isupper() else "black"
 
 
 def is_enemy(piece: str, color: str) -> bool:
@@ -69,34 +70,36 @@ def is_enemy(piece: str, color: str) -> bool:
 def piece_letter(piece: str) -> str:
     return piece.lower()
 
+
 # ==============================
 # Generasi Gerakan
 # ==============================
 
+
 def get_pawn_moves(board: Board, row: int, col: int, color: str) -> List[Move]:
     moves: List[Move] = []
-    dir_forward = -1 if color == 'white' else 1
-    start_row = 6 if color == 'white' else 1
+    dir_forward = -1 if color == "white" else 1
+    start_row = 6 if color == "white" else 1
 
     # maju satu
     nr, nc = row + dir_forward, col
-    if in_bounds(nr, nc) and board[nr][nc] == '.':
+    if in_bounds(nr, nc) and board[nr][nc] == ".":
         # promosi
-        if (color == 'white' and nr == 0) or (color == 'black' and nr == 7):
-            moves.append((row, col, nr, nc, 'Q'))
+        if (color == "white" and nr == 0) or (color == "black" and nr == 7):
+            moves.append((row, col, nr, nc, "Q"))
         else:
             moves.append((row, col, nr, nc, None))
         # dari posisi awal, bisa maju dua jika jalur kosong
         nr2 = row + 2 * dir_forward
-        if row == start_row and in_bounds(nr2, nc) and board[nr2][nc] == '.':
+        if row == start_row and in_bounds(nr2, nc) and board[nr2][nc] == ".":
             moves.append((row, col, nr2, nc, None))
 
     # tangkap diagonal
     for dc in (-1, 1):
         nr, nc = row + dir_forward, col + dc
         if in_bounds(nr, nc) and is_enemy(board[nr][nc], color):
-            if (color == 'white' and nr == 0) or (color == 'black' and nr == 7):
-                moves.append((row, col, nr, nc, 'Q'))
+            if (color == "white" and nr == 0) or (color == "black" and nr == 7):
+                moves.append((row, col, nr, nc, "Q"))
             else:
                 moves.append((row, col, nr, nc, None))
 
@@ -111,18 +114,20 @@ def get_knight_moves(board: Board, row: int, col: int, color: str) -> List[Move]
         if not in_bounds(nr, nc):
             continue
         target = board[nr][nc]
-        if target == '.' or is_enemy(target, color):
+        if target == "." or is_enemy(target, color):
             moves.append((row, col, nr, nc, None))
     return moves
 
 
-def get_sliding_moves(board: Board, row: int, col: int, color: str, directions: List[Tuple[int, int]]) -> List[Move]:
+def get_sliding_moves(
+    board: Board, row: int, col: int, color: str, directions: List[Tuple[int, int]]
+) -> List[Move]:
     moves: List[Move] = []
     for dr, dc in directions:
         nr, nc = row + dr, col + dc
         while in_bounds(nr, nc):
             target = board[nr][nc]
-            if target == '.':
+            if target == ".":
                 moves.append((row, col, nr, nc, None))
             else:
                 if is_enemy(target, color):
@@ -144,10 +149,7 @@ def get_rook_moves(board: Board, row: int, col: int, color: str) -> List[Move]:
 
 
 def get_queen_moves(board: Board, row: int, col: int, color: str) -> List[Move]:
-    directions = [
-        (-1, -1), (-1, 1), (1, -1), (1, 1),
-        (-1, 0), (1, 0), (0, -1), (0, 1)
-    ]
+    directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
     return get_sliding_moves(board, row, col, color, directions)
 
 
@@ -161,28 +163,28 @@ def get_king_moves(board: Board, row: int, col: int, color: str) -> List[Move]:
             if not in_bounds(nr, nc):
                 continue
             target = board[nr][nc]
-            if target == '.' or is_enemy(target, color):
+            if target == "." or is_enemy(target, color):
                 moves.append((row, col, nr, nc, None))
     return moves
 
 
 def get_moves_for_piece(board: Board, row: int, col: int) -> List[Move]:
     piece = board[row][col]
-    if piece == '.':
+    if piece == ".":
         return []
     color = get_color(piece)
     letter = piece_letter(piece)
-    if letter == 'p':
+    if letter == "p":
         return get_pawn_moves(board, row, col, color)
-    if letter == 'n':
+    if letter == "n":
         return get_knight_moves(board, row, col, color)
-    if letter == 'b':
+    if letter == "b":
         return get_bishop_moves(board, row, col, color)
-    if letter == 'r':
+    if letter == "r":
         return get_rook_moves(board, row, col, color)
-    if letter == 'q':
+    if letter == "q":
         return get_queen_moves(board, row, col, color)
-    if letter == 'k':
+    if letter == "k":
         return get_king_moves(board, row, col, color)
     return []
 
@@ -192,7 +194,7 @@ def get_all_moves(board: Board, color: str) -> List[Move]:
     for r in range(ROWS):
         for c in range(COLS):
             piece = board[r][c]
-            if piece == '.':
+            if piece == ".":
                 continue
             if get_color(piece) != color:
                 continue
@@ -200,7 +202,7 @@ def get_all_moves(board: Board, color: str) -> List[Move]:
                 r1, c1, r2, c2, promo = mv
                 target = board[r2][c2]
                 # Tidak boleh menabrak teman sendiri
-                if target != '.' and get_color(target) == color:
+                if target != "." and get_color(target) == color:
                     continue
                 moves.append(mv)
     return moves
@@ -210,13 +212,14 @@ def get_all_moves(board: Board, color: str) -> List[Move]:
 # Aksi Papan (terapkan langkah, evaluasi)
 # ==============================
 
+
 def apply_move(board: Board, move: Move) -> Board:
     r1, c1, r2, c2, promo = move
     new_board = copy.deepcopy(board)
     piece = new_board[r1][c1]
-    new_board[r1][c1] = '.'
-    if promo is not None and piece_letter(piece) == 'p' and (r2 == 0 or r2 == 7):
-        piece = promo if get_color(piece) == 'white' else promo.lower()
+    new_board[r1][c1] = "."
+    if promo is not None and piece_letter(piece) == "p" and (r2 == 0 or r2 == 7):
+        piece = promo if get_color(piece) == "white" else promo.lower()
     new_board[r2][c2] = piece
     return new_board
 
@@ -226,7 +229,7 @@ def evaluate(board: Board) -> int:
     for r in range(ROWS):
         for c in range(COLS):
             piece = board[r][c]
-            if piece == '.':
+            if piece == ".":
                 continue
             val = PIECE_VALUES.get(piece_letter(piece), 0)
             score += val if piece.isupper() else -val
@@ -237,7 +240,8 @@ def evaluate(board: Board) -> int:
 # AI Sederhana (Greedy / Minimax kedalaman 1)
 # ==============================
 
-def ai_choose_move(board: Board, color: str = 'black') -> Optional[Move]:
+
+def ai_choose_move(board: Board, color: str = "black") -> Optional[Move]:
     moves = get_all_moves(board, color)
     if not moves:
         return None
@@ -252,7 +256,7 @@ def ai_choose_move(board: Board, color: str = 'black') -> Optional[Move]:
     for mv in moves:
         new_board = apply_move(board, mv)
         sc = evaluate(new_board)
-        if color == 'white':
+        if color == "white":
             better = (best_score is None) or (sc > best_score)
         else:
             better = (best_score is None) or (sc < best_score)
@@ -267,18 +271,30 @@ def ai_choose_move(board: Board, color: str = 'black') -> Optional[Move]:
 # Rendering Pygame
 # ==============================
 
-def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font, selected: Optional[Tuple[int, int]], legal_moves: List[Move]):
+
+def draw_board(
+    screen: pygame.Surface,
+    board: Board,
+    font: pygame.font.Font,
+    selected: Optional[Tuple[int, int]],
+    legal_moves: List[Move],
+):
     # kotak
     for r in range(ROWS):
         for c in range(COLS):
             color = LIGHT if (r + c) % 2 == 0 else DARK
-            rect = pygame.Rect(c * SQUARE_SIZE, r * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            rect = pygame.Rect(
+                c * SQUARE_SIZE, r * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE
+            )
             pygame.draw.rect(screen, color, rect)
 
     # highlight legal moves
     for mv in legal_moves:
         _, _, r2, c2, _ = mv
-        center = (c2 * SQUARE_SIZE + SQUARE_SIZE // 2, r2 * SQUARE_SIZE + SQUARE_SIZE // 2)
+        center = (
+            c2 * SQUARE_SIZE + SQUARE_SIZE // 2,
+            r2 * SQUARE_SIZE + SQUARE_SIZE // 2,
+        )
         pygame.draw.circle(screen, MOVE_HINT, center, 12)
 
     # highlight pilihan
@@ -291,7 +307,7 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font, sel
     for r in range(ROWS):
         for c in range(COLS):
             piece = board[r][c]
-            if piece == '.':
+            if piece == ".":
                 continue
             is_white = piece.isupper()
             label = piece.upper()
@@ -300,7 +316,15 @@ def draw_board(screen: pygame.Surface, board: Board, font: pygame.font.Font, sel
             render_and_blit_text(screen, label, font, c, r, text_color, outline=True)
 
 
-def render_and_blit_text(screen: pygame.Surface, text: str, font: pygame.font.Font, col: int, row: int, color, outline: bool = True):
+def render_and_blit_text(
+    screen: pygame.Surface,
+    text: str,
+    font: pygame.font.Font,
+    col: int,
+    row: int,
+    color,
+    outline: bool = True,
+):
     x = col * SQUARE_SIZE + SQUARE_SIZE // 2
     y = row * SQUARE_SIZE + SQUARE_SIZE // 2
     if outline:
@@ -317,6 +341,7 @@ def render_and_blit_text(screen: pygame.Surface, text: str, font: pygame.font.Fo
 # Input & Game Loop
 # ==============================
 
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -328,7 +353,7 @@ def main():
     board = create_initial_board()
     selected: Optional[Tuple[int, int]] = None
     legal_moves: List[Move] = []
-    turn = 'white'  # giliran mulai
+    turn = "white"  # giliran mulai
 
     running = True
     ai_think_delay = 250  # ms
@@ -346,24 +371,24 @@ def main():
                     board = create_initial_board()
                     selected = None
                     legal_moves = []
-                    turn = 'white'
+                    turn = "white"
                     ai_pending = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if turn == 'white':  # pemain = putih
+                if turn == "white":  # pemain = putih
                     mx, my = pygame.mouse.get_pos()
                     c = mx // SQUARE_SIZE
                     r = my // SQUARE_SIZE
                     if selected is None:
                         # pilih bidak putih
                         piece = board[r][c]
-                        if piece != '.' and get_color(piece) == 'white':
+                        if piece != "." and get_color(piece) == "white":
                             selected = (r, c)
                             # filter gerak valid dari petak ini
                             legal_moves = []
                             for mv in get_moves_for_piece(board, r, c):
                                 r1, c1, r2, c2, promo = mv
                                 target = board[r2][c2]
-                                if target != '.' and get_color(target) == 'white':
+                                if target != "." and get_color(target) == "white":
                                     continue
                                 legal_moves.append(mv)
                         else:
@@ -381,19 +406,19 @@ def main():
                             board = apply_move(board, chosen)
                             selected = None
                             legal_moves = []
-                            turn = 'black'
+                            turn = "black"
                             ai_pending = True
                             ai_timer_start = pygame.time.get_ticks()
                         else:
                             # klik lain: jika pilih bidak putih lain
                             piece = board[r][c]
-                            if piece != '.' and get_color(piece) == 'white':
+                            if piece != "." and get_color(piece) == "white":
                                 selected = (r, c)
                                 legal_moves = []
                                 for mv in get_moves_for_piece(board, r, c):
                                     r1, c1, r2, c2, promo = mv
                                     target = board[r2][c2]
-                                    if target != '.' and get_color(target) == 'white':
+                                    if target != "." and get_color(target) == "white":
                                         continue
                                     legal_moves.append(mv)
                             else:
@@ -401,14 +426,14 @@ def main():
                                 legal_moves = []
 
         # Giliran AI (hitam)
-        if turn == 'black' and ai_pending:
+        if turn == "black" and ai_pending:
             now = pygame.time.get_ticks()
             if now - ai_timer_start >= ai_think_delay:
-                mv = ai_choose_move(board, 'black')
+                mv = ai_choose_move(board, "black")
                 if mv is not None:
                     board = apply_move(board, mv)
                 # selesai giliran
-                turn = 'white'
+                turn = "white"
                 ai_pending = False
                 selected = None
                 legal_moves = []
